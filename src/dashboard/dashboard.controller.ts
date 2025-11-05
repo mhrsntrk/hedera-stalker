@@ -71,6 +71,7 @@ export class DashboardController {
         accounts: dashboardData,
         network: this.hederaService.getNetwork(),
         timestamp: new Date().toISOString(),
+        telegramBotUsername: process.env.TELEGRAM_BOT_USERNAME || null,
       };
     } catch (error) {
       this.logger.error(`Error fetching dashboard data: ${error.message}`, error.stack);
@@ -80,6 +81,7 @@ export class DashboardController {
         accounts: [],
         network: this.hederaService.getNetwork(),
         timestamp: new Date().toISOString(),
+        telegramBotUsername: process.env.TELEGRAM_BOT_USERNAME || null,
         error: 'Failed to load dashboard data. Please check server logs.',
       };
     }

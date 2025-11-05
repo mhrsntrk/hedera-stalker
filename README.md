@@ -125,6 +125,8 @@ ADMIN_PASSWORD_HASH=your_bcrypt_hash_here
 # See "Notifications" section below for setup instructions
 # Users subscribe via bot commands - no need for TELEGRAM_CHAT_ID
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
+# Bot username for dashboard floating button (e.g., hedera_stalker_bot for @hedera_stalker_bot)
+TELEGRAM_BOT_USERNAME=hedera_stalker_bot
 # Low balance threshold in HBAR (default: 1)
 LOW_BALANCE_THRESHOLD=1
 ```
@@ -196,8 +198,11 @@ The application uses a **subscription-based Telegram notification system**. User
    Add these to your `.env` file:
    ```env
    TELEGRAM_BOT_TOKEN=your_bot_token_here
+   TELEGRAM_BOT_USERNAME=hedera_stalker_bot
    LOW_BALANCE_THRESHOLD=1
    ```
+   
+   **Note**: `TELEGRAM_BOT_USERNAME` is optional but recommended. If set, a floating button will appear on the dashboard that links to your Telegram bot. The bot username is the part after `@` in your bot's Telegram handle (e.g., `hedera_stalker_bot` for `@hedera_stalker_bot`).
 
 3. **Set Up Webhook (Required for Bot Commands):**
    
@@ -400,6 +405,7 @@ This application is ready to deploy to CapRover. Here's how:
      # Notifications (optional - Telegram Bot)
      # Users subscribe via bot commands - see README "Notifications" section
      TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
+     TELEGRAM_BOT_USERNAME=hedera_stalker_bot
      LOW_BALANCE_THRESHOLD=1
      # After deployment, set webhook: curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://yourdomain.com/api/telegram/webhook"
      

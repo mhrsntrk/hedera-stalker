@@ -25,6 +25,8 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: hedera-stalker-app
+    env_file:
+      - .env
     environment:
       DB_HOST: postgres
       DB_PORT: ${DB_PORT:-5432}
@@ -33,6 +35,19 @@ services:
       DB_DATABASE: ${DB_DATABASE:-hedera_stalker}
       HEDERA_NETWORK: ${HEDERA_NETWORK:-testnet}
       PORT: ${PORT:-3000}
+      # Optional: Telegram Bot Configuration
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      TELEGRAM_BOT_USERNAME: ${TELEGRAM_BOT_USERNAME:-}
+      LOW_BALANCE_THRESHOLD: ${LOW_BALANCE_THRESHOLD:-1}
+      # Optional: Security
+      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH:-}
+      # Optional: CORS
+      CORS_ORIGINS: ${CORS_ORIGINS:-}
+      # Optional: Database Options
+      DB_SYNCHRONIZE: ${DB_SYNCHRONIZE:-true}
+      DB_LOGGING: ${DB_LOGGING:-false}
+      # Optional: Environment
+      NODE_ENV: ${NODE_ENV:-development}
     ports:
       - "${PORT:-3000}:3000"
     depends_on:
