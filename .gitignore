@@ -38,7 +38,22 @@ lerna-debug.log*
 .env
 .env.local
 .env.*.local
+*.env
+!.env.example
 
 # Docker
 docker-compose.override.yml
+
+# Build artifacts
+*.tsbuildinfo
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Temporary files
+*.tmp
+*.temp
+.cache
 

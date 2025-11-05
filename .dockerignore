@@ -3,6 +3,7 @@ dist
 npm-debug.log
 .env
 .env.local
+.env.*.local
 .git
 .gitignore
 README.md
@@ -11,4 +12,11 @@ coverage
 .idea
 *.md
 .DS_Store
+*.log
+*.tmp
+.cache
+coverage
+*.sqlite
+*.db
+.env.example
 
