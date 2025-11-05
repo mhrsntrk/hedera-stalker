@@ -243,6 +243,7 @@ Users can interact with the bot using these commands:
 - `/start` or `/subscribe` - Subscribe to balance notifications
 - `/unsubscribe` - Stop receiving notifications
 - `/status` - Check your subscription status
+- `/check` - Perform a health check on the service (checks bot token, database, accounts, Hedera network, and threshold settings)
 - `/help` - Show available commands
 
 ### Optional: Customize Threshold

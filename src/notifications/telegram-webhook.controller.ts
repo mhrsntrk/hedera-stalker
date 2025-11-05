@@ -73,7 +73,8 @@ export class TelegramWebhookController {
         // Handle commands
         if (text.startsWith('/')) {
           // Extract command without parameters (e.g., "/start hello" -> "/start")
-          const command = text.split(' ')[0].toLowerCase();
+          const command = text.split(' ')[0].toLowerCase().trim();
+          this.logger.log(`Processing command: "${command}"`);
           await this.handleCommand(chatId, command, from, message.chat);
         }
       }
@@ -93,6 +94,8 @@ export class TelegramWebhookController {
   ) {
     const firstName = from?.first_name || chat.first_name || 'User';
     const username = from?.username || chat.username || undefined;
+
+    this.logger.log(`Handling command: "${command}" for chat ${chatId}`);
 
     try {
       if (command === '/start' || command === '/subscribe') {
