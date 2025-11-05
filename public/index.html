@@ -160,6 +160,13 @@
          display: grid;
          grid-template-columns: repeat(auto-fill, minmax(min(100%, 350px), 1fr));
          gap: 24px;
+         min-height: 200px;
+       }
+
+       .accounts-grid.empty-grid {
+         display: flex;
+         justify-content: center;
+         align-items: center;
        }
 
        @media (max-width: 768px) {
@@ -397,16 +404,25 @@
         text-align: center;
         padding: 60px 20px;
         color: var(--text);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 50vh;
+        width: 100%;
       }
 
       .empty-state h2 {
         font-size: 24px;
         margin-bottom: 12px;
+        color: var(--text);
       }
 
       .empty-state p {
         font-size: 16px;
         opacity: 0.9;
+        color: var(--muted);
+        max-width: 500px;
       }
 
       .add-account-section {
@@ -938,6 +954,7 @@
           const accounts = Array.isArray(data.accounts) ? data.accounts : [];
 
           if (accounts.length === 0) {
+            grid.className = 'accounts-grid empty-grid';
             grid.innerHTML = `
                         <div class="empty-state">
                             <h2>No accounts found</h2>
@@ -970,6 +987,7 @@
             : 'Never';
 
           // Render accounts
+          grid.className = 'accounts-grid';
           grid.innerHTML = accounts.map(createAccountCard).join('');
         } catch (error) {
           console.error('Error loading dashboard:', error);
@@ -987,6 +1005,7 @@
             }
           }
           
+          grid.className = 'accounts-grid empty-grid';
           grid.innerHTML = `
                     <div class="empty-state">
                         <h2>Error loading dashboard</h2>
