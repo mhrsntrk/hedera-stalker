@@ -905,7 +905,26 @@
 
         try {
           const response = await fetch('/api/dashboard/data');
+          
+          // Check if response is OK
+          if (!response.ok) {
+            const text = await response.text();
+            throw new Error(`API error: ${response.status} ${response.statusText}. ${text.substring(0, 100)}`);
+          }
+
+          // Check if response is JSON
+          const contentType = response.headers.get('content-type');
+          if (!contentType || !contentType.includes('application/json')) {
+            const text = await response.text();
+            throw new Error(`Expected JSON but got ${contentType}. Response: ${text.substring(0, 100)}`);
+          }
+
           const data = await response.json();
+
+          // Validate response structure
+          if (!data || typeof data !== 'object') {
+            throw new Error('Invalid response format from API');
+          }
 
           // Display network (always shown, even if no accounts)
           const network = data.network || 'unknown';
@@ -915,7 +934,10 @@
           // Store network globally for hashscan links
           currentNetwork = network;
 
-          if (data.accounts.length === 0) {
+          // Ensure accounts is an array
+          const accounts = Array.isArray(data.accounts) ? data.accounts : [];
+
+          if (accounts.length === 0) {
             grid.innerHTML = `
                         <div class="empty-state">
                             <h2>No accounts found</h2>
@@ -930,12 +952,12 @@
           }
 
           // Update stats
-          const totalAccounts = data.accounts.length;
-          const totalBalance = data.accounts.reduce(
+          const totalAccounts = accounts.length;
+          const totalBalance = accounts.reduce(
             (sum, acc) => sum + acc.currentBalance,
             0,
           );
-          const lastUpdated = data.accounts
+          const lastUpdated = accounts
             .map((acc) => (acc.lastUpdated ? new Date(acc.lastUpdated) : null))
             .filter((d) => d !== null)
             .sort((a, b) => b - a)[0];
@@ -948,15 +970,38 @@
             : 'Never';
 
           // Render accounts
-          grid.innerHTML = data.accounts.map(createAccountCard).join('');
+          grid.innerHTML = accounts.map(createAccountCard).join('');
         } catch (error) {
+          console.error('Error loading dashboard:', error);
+          
+          // Show user-friendly error message
+          let errorMessage = 'Failed to load dashboard data.';
+          
+          if (error.message) {
+            if (error.message.includes('JSON')) {
+              errorMessage = 'Server returned invalid data. Please check if the API is running correctly.';
+            } else if (error.message.includes('API error')) {
+              errorMessage = `Server error: ${error.message}`;
+            } else {
+              errorMessage = error.message;
+            }
+          }
+          
           grid.innerHTML = `
                     <div class="empty-state">
                         <h2>Error loading dashboard</h2>
-                        <p>${error.message}</p>
+                        <p>${escapeHtml(errorMessage)}</p>
+                        <p style="margin-top: 12px; font-size: 12px; color: var(--muted);">
+                          Check the browser console for more details.
+                        </p>
                     </div>
                 `;
-          console.error('Error loading dashboard:', error);
+          
+          // Reset stats to default values
+          document.getElementById('network').textContent = '-';
+          document.getElementById('totalAccounts').textContent = '-';
+          document.getElementById('totalBalance').textContent = '- HBAR';
+          document.getElementById('lastUpdated').textContent = '-';
         }
       }
 

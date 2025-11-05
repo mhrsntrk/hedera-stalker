@@ -1,10 +1,12 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Logger } from '@nestjs/common';
 import { AccountsService } from '../accounts/accounts.service';
 import { BalanceHistoryService } from '../balance-history/balance-history.service';
 import { HederaService } from '../hedera/hedera.service';
 
 @Controller('api/dashboard')
 export class DashboardController {
+  private readonly logger = new Logger(DashboardController.name);
+
   constructor(
     private readonly accountsService: AccountsService,
     private readonly balanceHistoryService: BalanceHistoryService,
@@ -13,7 +15,8 @@ export class DashboardController {
 
   @Get('data')
   async getDashboardData() {
-    const accounts = await this.accountsService.findAll();
+    try {
+      const accounts = await this.accountsService.findAll();
     
     const dashboardData = await Promise.all(
       accounts.map(async (account) => {
@@ -64,11 +67,22 @@ export class DashboardController {
       }),
     );
 
-    return {
-      accounts: dashboardData,
-      network: this.hederaService.getNetwork(),
-      timestamp: new Date().toISOString(),
-    };
+      return {
+        accounts: dashboardData,
+        network: this.hederaService.getNetwork(),
+        timestamp: new Date().toISOString(),
+      };
+    } catch (error) {
+      this.logger.error(`Error fetching dashboard data: ${error.message}`, error.stack);
+      
+      // Always return valid JSON, even on error
+      return {
+        accounts: [],
+        network: this.hederaService.getNetwork(),
+        timestamp: new Date().toISOString(),
+        error: 'Failed to load dashboard data. Please check server logs.',
+      };
+    }
   }
 }
 
