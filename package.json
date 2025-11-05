@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "description": "A simple app to track Hedera accounts",
   "author": "mhrsntrk",
-  "license": "ISC",
+  "license": "Personal Use Only - See LICENSE file",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

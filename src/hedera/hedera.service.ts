@@ -9,15 +9,16 @@ import {
 export class HederaService {
   private readonly logger = new Logger(HederaService.name);
   private client: Client;
+  private network: string;
 
   constructor() {
     this.initializeClient();
   }
 
   private initializeClient() {
-    const network = process.env.HEDERA_NETWORK || 'testnet';
+    this.network = process.env.HEDERA_NETWORK || 'testnet';
     
-    switch (network) {
+    switch (this.network) {
       case 'mainnet':
         this.client = Client.forMainnet();
         break;
@@ -29,9 +30,14 @@ export class HederaService {
         break;
       default:
         this.client = Client.forTestnet();
+        this.network = 'testnet';
     }
 
-    this.logger.log(`Initialized Hedera client for ${network}`);
+    this.logger.log(`Initialized Hedera client for ${this.network}`);
+  }
+
+  getNetwork(): string {
+    return this.network;
   }
 
   async getAccountBalance(accountIdString: string): Promise<number> {

@@ -92,19 +92,23 @@
       }
 
       .stats-bar {
-        display: flex;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
         gap: 16px;
         margin-top: 16px;
-        flex-wrap: wrap;
       }
 
       .stat-item {
-        flex: 1;
-        min-width: 150px;
         padding: 12px;
         background: rgba(255, 255, 255, 0.03);
         border: 1px solid var(--border);
         border-radius: 12px;
+      }
+
+      @media (max-width: 768px) {
+        .stats-bar {
+          grid-template-columns: 1fr;
+        }
       }
 
       .stat-item-with-action {
@@ -186,11 +190,7 @@
          }
 
          .stats-bar {
-           flex-direction: column;
-         }
-
-         .stat-item {
-           width: 100%;
+           grid-template-columns: 1fr;
          }
 
          .stat-item-with-action {
@@ -315,6 +315,18 @@
         font-size: 12px;
         color: var(--muted);
         font-family: 'Courier New', monospace;
+      }
+
+      .account-id-link {
+        color: var(--accent);
+        text-decoration: none;
+        transition: color 0.2s;
+        cursor: pointer;
+      }
+
+      .account-id-link:hover {
+        color: var(--accent-strong);
+        text-decoration: underline;
       }
 
       .balance {
@@ -618,6 +630,10 @@
         </p>
         <div class="stats-bar">
           <div class="stat-item">
+            <div class="stat-label">Network</div>
+            <div class="stat-value" id="network">-</div>
+          </div>
+          <div class="stat-item">
             <div class="stat-label">Total Accounts</div>
             <div class="stat-value" id="totalAccounts">-</div>
           </div>
@@ -782,10 +798,19 @@
         return 'neutral';
       }
 
+      // Store current network globally for hashscan links
+      let currentNetwork = 'testnet';
+
+      function getHashscanUrl(accountId, network) {
+        const networkPath = network.toLowerCase();
+        return `https://hashscan.io/${networkPath}/account/${accountId}`;
+      }
+
       function createAccountCard(account) {
         // Sanitize all user inputs to prevent XSS
         const accountName = escapeHtml(account.name || account.accountId);
         const accountId = escapeHtml(account.accountId);
+        const accountIdRaw = account.accountId; // Use raw ID for URL (already validated on backend)
         const lastUpdated = account.lastUpdated
           ? escapeHtml(formatDate(account.lastUpdated))
           : 'Never updated';
@@ -810,7 +835,15 @@
                     <div class="account-header">
                         <div>
                             <div class="account-name">${accountName}</div>
-                            <div class="account-id">${accountId}</div>
+                            <div class="account-id">
+                                <a href="${getHashscanUrl(accountIdRaw, currentNetwork)}" 
+                                   target="_blank" 
+                                   rel="noopener noreferrer" 
+                                   class="account-id-link"
+                                   title="View account on Hashscan">
+                                    ${accountId}
+                                </a>
+                            </div>
                         </div>
                     </div>
                     <div class="${balanceClass}">${formatHBAR(account.currentBalance)} HBAR</div>
@@ -874,6 +907,14 @@
           const response = await fetch('/api/dashboard/data');
           const data = await response.json();
 
+          // Display network (always shown, even if no accounts)
+          const network = data.network || 'unknown';
+          const networkDisplay = network.charAt(0).toUpperCase() + network.slice(1);
+          document.getElementById('network').textContent = networkDisplay;
+          
+          // Store network globally for hashscan links
+          currentNetwork = network;
+
           if (data.accounts.length === 0) {
             grid.innerHTML = `
                         <div class="empty-state">
@@ -881,6 +922,10 @@
                             <p>Add accounts via the API to start monitoring</p>
                         </div>
                     `;
+            // Set other stats to default values
+            document.getElementById('totalAccounts').textContent = '0';
+            document.getElementById('totalBalance').textContent = '0 HBAR';
+            document.getElementById('lastUpdated').textContent = 'Never';
             return;
           }
 

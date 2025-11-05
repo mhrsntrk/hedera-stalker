@@ -282,8 +282,11 @@ This application is ready to deploy to CapRover. Here's how:
      DB_USERNAME=<your_postgres_user>
      DB_PASSWORD=<your_postgres_password>
      DB_DATABASE=hedera_stalker
-     DB_SYNCHRONIZE=false
+     DB_SYNCHRONIZE=true
      DB_LOGGING=false
+     
+     # Note: DB_SYNCHRONIZE=true will automatically create tables on first run.
+     # After initial deployment, set DB_SYNCHRONIZE=false for production safety.
      
      # Hedera Network
      HEDERA_NETWORK=mainnet
@@ -298,7 +301,7 @@ This application is ready to deploy to CapRover. Here's how:
      NODE_ENV=production
      ```
    - To generate password hash: `node scripts/generate-password-hash.js <your_password>`
-   - **Important**: Set `DB_SYNCHRONIZE=false` in production to prevent accidental schema changes
+   - **Database Setup**: `DB_SYNCHRONIZE=true` will automatically create tables on first deployment. After initial setup, you can set it to `false` for production safety (recommended).
 
 5. **Deploy:**
    - Click "Save & Update" in App Configs
@@ -311,7 +314,7 @@ This application is ready to deploy to CapRover. Here's how:
 - Database connection uses the PostgreSQL service name (e.g., `srv-captain--postgresql`)
 - Make sure PostgreSQL is accessible from your app container
 - Health checks are configured for automatic recovery (endpoint: `/health`)
-- Set `DB_SYNCHRONIZE=false` in production to prevent accidental database schema changes
+- **Database Tables**: Tables are automatically created on first deployment with `DB_SYNCHRONIZE=true` (default). After initial setup, you can set `DB_SYNCHRONIZE=false` for production safety.
 - Configure `CORS_ORIGINS` with your actual domain(s) for production security
 
 ## Production Considerations
@@ -326,5 +329,22 @@ This application is ready to deploy to CapRover. Here's how:
 
 ## License
 
-ISC
+This project is licensed under a **Personal Use License**. 
+
+### Free for Personal Use
+- ✅ Personal, non-commercial use
+- ✅ Educational purposes
+- ✅ Research and development
+- ✅ Open source projects (non-commercial)
+- ✅ Forking and modification for personal use
+
+### Commercial Use Requires Paid License
+- ❌ Commercial business or for-profit organizations
+- ❌ Use as part of a service or product offered to customers
+- ❌ Use in applications that generate revenue
+- ❌ Government agencies or contractors
+
+**For commercial licensing inquiries**, please contact the repository owner.
+
+See the [LICENSE](LICENSE) file for full terms and conditions.
 

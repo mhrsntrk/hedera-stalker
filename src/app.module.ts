@@ -22,7 +22,8 @@ import { DashboardModule } from './dashboard/dashboard.module';
       password: process.env.DB_PASSWORD || 'hedera_stalker_password',
       database: process.env.DB_DATABASE || 'hedera_stalker',
       entities: [__dirname + '/**/*.entity{.ts,.js}'],
-      synchronize: process.env.DB_SYNCHRONIZE === 'true' || false, // Only true if explicitly set
+      // Default to true for initial setup convenience, set DB_SYNCHRONIZE=false in production after tables are created
+      synchronize: process.env.DB_SYNCHRONIZE !== 'false', // Defaults to true, set to 'false' to disable
       logging: process.env.DB_LOGGING === 'true' || false,
     }),
     ScheduleModule.forRoot(),

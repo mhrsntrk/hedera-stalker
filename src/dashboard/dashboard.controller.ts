@@ -1,12 +1,14 @@
 import { Controller, Get } from '@nestjs/common';
 import { AccountsService } from '../accounts/accounts.service';
 import { BalanceHistoryService } from '../balance-history/balance-history.service';
+import { HederaService } from '../hedera/hedera.service';
 
 @Controller('api/dashboard')
 export class DashboardController {
   constructor(
     private readonly accountsService: AccountsService,
     private readonly balanceHistoryService: BalanceHistoryService,
+    private readonly hederaService: HederaService,
   ) {}
 
   @Get('data')
@@ -64,6 +66,7 @@ export class DashboardController {
 
     return {
       accounts: dashboardData,
+      network: this.hederaService.getNetwork(),
       timestamp: new Date().toISOString(),
     };
   }
