@@ -1,0 +1,1088 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Hedera Account Monitor</title>
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #0b0d12;
+        --bg-gradient-start: #0b0d12;
+        --bg-gradient-end: #111625;
+        --card: #141927;
+        --card-elevated: #181e2f;
+        --border: #21283b;
+        --text: #e6e8f0;
+        --muted: #9aa3b2;
+        --accent: #7a3cff; /* Hedera purple */
+        --accent-strong: #9b6dff;
+        --positive: #22c55e;
+        --negative: #ef4444;
+        --shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
+        --radius: 14px;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+       body {
+         font-family:
+           'Inter',
+           -apple-system,
+           BlinkMacSystemFont,
+           'Segoe UI',
+           Roboto,
+           Oxygen,
+           Ubuntu,
+           Cantarell,
+           sans-serif;
+         background:
+           radial-gradient(
+             1200px 600px at 10% -10%,
+             rgba(122, 60, 255, 0.12),
+             transparent 40%
+           ),
+           radial-gradient(
+             900px 500px at 90% -10%,
+             rgba(122, 60, 255, 0.1),
+             transparent 40%
+           ),
+           linear-gradient(
+             180deg,
+             var(--bg-gradient-start),
+             var(--bg-gradient-end)
+           );
+         min-height: 100vh;
+         padding: 20px;
+         padding-bottom: 100px;
+         color: var(--text);
+       }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      header {
+        background: linear-gradient(180deg, var(--card), var(--card-elevated));
+        border-radius: var(--radius);
+        padding: 24px;
+        margin-bottom: 24px;
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+      }
+
+      h1 {
+        color: var(--text);
+        font-size: 32px;
+        margin-bottom: 8px;
+      }
+
+      .subtitle {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .stats-bar {
+        display: flex;
+        gap: 16px;
+        margin-top: 16px;
+        flex-wrap: wrap;
+      }
+
+      .stat-item {
+        flex: 1;
+        min-width: 150px;
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+      }
+
+      .stat-item-with-action {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .refresh-btn-stat {
+        background: var(--accent);
+        border: none;
+        border-radius: 8px;
+        padding: 8px 16px;
+        color: white;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        font-family: 'Inter', sans-serif;
+      }
+
+      .refresh-btn-stat:hover {
+        background: var(--accent-strong);
+      }
+
+      .refresh-btn-stat:active {
+        transform: scale(0.95);
+      }
+
+      .refresh-btn-stat:disabled {
+        opacity: 0.6;
+        cursor: wait;
+      }
+
+      .stat-label {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 4px;
+      }
+
+      .stat-value {
+        font-size: 20px;
+        font-weight: 600;
+        color: var(--text);
+      }
+
+       .accounts-grid {
+         display: grid;
+         grid-template-columns: repeat(auto-fill, minmax(min(100%, 350px), 1fr));
+         gap: 24px;
+       }
+
+       @media (max-width: 768px) {
+         body {
+           padding: 12px;
+         }
+
+         .container {
+           max-width: 100%;
+         }
+
+         .accounts-grid {
+           grid-template-columns: 1fr;
+           gap: 16px;
+         }
+
+         .account-card {
+           padding: 16px;
+         }
+
+         .balance {
+           font-size: 24px;
+         }
+
+         .change-section {
+           grid-template-columns: 1fr;
+           gap: 8px;
+         }
+
+         .stats-bar {
+           flex-direction: column;
+         }
+
+         .stat-item {
+           width: 100%;
+         }
+
+         .stat-item-with-action {
+           flex-direction: column;
+           align-items: flex-start;
+           gap: 12px;
+         }
+
+         .refresh-btn-stat {
+           width: 100%;
+         }
+
+         header {
+           padding: 16px;
+         }
+
+         h1 {
+           font-size: 24px;
+         }
+
+         .subtitle {
+           font-size: 12px;
+         }
+
+         .add-account-section {
+           padding: 16px;
+         }
+
+         footer {
+           padding: 14px 16px;
+           font-size: 11px;
+         }
+
+         .footer-content {
+           gap: 4px;
+         }
+
+         .footer-content > div:first-child {
+           font-size: 11px;
+           gap: 4px;
+         }
+       }
+
+      .account-card {
+        background: linear-gradient(180deg, var(--card), var(--card-elevated));
+        border-radius: var(--radius);
+        padding: 24px;
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+        transition:
+          transform 0.2s,
+          box-shadow 0.2s;
+        position: relative;
+      }
+
+      .account-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .account-card.low-balance {
+        border-color: var(--negative);
+        border-width: 2px;
+      }
+
+      .low-balance-warning {
+        background: linear-gradient(
+          135deg,
+          rgba(239, 68, 68, 0.15),
+          rgba(239, 68, 68, 0.25)
+        );
+        border: 1px solid var(--negative);
+        border-radius: 8px;
+        padding: 12px;
+        margin-bottom: 16px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        animation: pulse-warning 2s ease-in-out infinite;
+      }
+
+      .low-balance-warning-icon {
+        font-size: 20px;
+      }
+
+      .low-balance-warning-text {
+        color: var(--negative);
+        font-size: 13px;
+        font-weight: 600;
+        flex: 1;
+      }
+
+      @keyframes pulse-warning {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.8;
+        }
+      }
+
+      .balance.low {
+        color: var(--negative);
+      }
+
+      .account-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 20px;
+      }
+
+      .account-name {
+        font-size: 18px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 4px;
+      }
+
+      .account-id {
+        font-size: 12px;
+        color: var(--muted);
+        font-family: 'Courier New', monospace;
+      }
+
+      .balance {
+        font-size: 32px;
+        font-weight: 700;
+        color: var(--accent);
+        margin-bottom: 20px;
+      }
+
+      .change-section {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+      }
+
+      .change-item {
+        padding: 12px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        text-align: center;
+      }
+
+      .change-label {
+        font-size: 10px;
+        color: var(--muted);
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        font-weight: 600;
+      }
+
+      .change-value {
+        font-size: 16px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+
+      .change-percent {
+        font-size: 12px;
+      }
+
+      .positive {
+        color: var(--positive);
+      }
+
+      .negative {
+        color: var(--negative);
+      }
+
+      .neutral {
+        color: var(--muted);
+      }
+
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: white;
+        font-size: 18px;
+      }
+
+      .last-updated {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 12px;
+      }
+
+      .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: var(--text);
+      }
+
+      .empty-state h2 {
+        font-size: 24px;
+        margin-bottom: 12px;
+      }
+
+      .empty-state p {
+        font-size: 16px;
+        opacity: 0.9;
+      }
+
+      .add-account-section {
+        background: linear-gradient(180deg, var(--card), var(--card-elevated));
+        border-radius: var(--radius);
+        padding: 24px;
+        margin-bottom: 24px;
+        border: 1px solid var(--border);
+        box-shadow: var(--shadow);
+      }
+
+      .add-account-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        cursor: pointer;
+      }
+
+      .add-account-header h2 {
+        font-size: 20px;
+        color: var(--text);
+        margin: 0;
+      }
+
+      .add-account-form {
+        display: none;
+      }
+
+      .add-account-form.show {
+        display: block;
+      }
+
+      .form-group {
+        margin-bottom: 16px;
+      }
+
+      .form-group label {
+        display: block;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text);
+        margin-bottom: 8px;
+      }
+
+      .form-group input {
+        width: 100%;
+        padding: 12px;
+        border: 2px solid var(--border);
+        background: rgba(255, 255, 255, 0.02);
+        color: var(--text);
+        border-radius: 12px;
+        font-size: 14px;
+        transition: border-color 0.2s;
+      }
+
+      .form-group input:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(122, 60, 255, 0.15);
+      }
+
+      .form-actions {
+        display: flex;
+        gap: 12px;
+        margin-top: 20px;
+      }
+
+      .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 999px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      .btn-primary {
+        background: var(--accent);
+        color: white;
+      }
+
+      .btn-primary:hover {
+        background: var(--accent-strong);
+      }
+
+      .btn-secondary {
+        background: transparent;
+        border: 1px solid var(--border);
+        color: var(--text);
+      }
+
+      .btn-secondary:hover {
+        background: rgba(255, 255, 255, 0.04);
+      }
+
+      .btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
+      .message {
+        padding: 12px;
+        border-radius: 8px;
+        margin-bottom: 16px;
+        font-size: 14px;
+        display: none;
+      }
+
+      .message.show {
+        display: block;
+      }
+
+      .message.success {
+        background: rgba(34, 197, 94, 0.12);
+        color: #75d39e;
+        border: 1px solid rgba(34, 197, 94, 0.25);
+      }
+
+      .message.error {
+        background: rgba(239, 68, 68, 0.12);
+        color: #f29f9f;
+        border: 1px solid rgba(239, 68, 68, 0.25);
+      }
+
+      .toggle-icon {
+        font-size: 20px;
+        transition: transform 0.2s;
+      }
+
+      .toggle-icon.rotated {
+        transform: rotate(180deg);
+      }
+
+      footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(180deg, rgba(11, 13, 18, 0.95), rgba(20, 25, 39, 0.98));
+        backdrop-filter: blur(10px);
+        border-top: 1px solid var(--border);
+        padding: 20px 24px;
+        text-align: center;
+        color: var(--muted);
+        font-size: 13px;
+        z-index: 100;
+        box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+      }
+
+      .footer-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .footer-link {
+        color: var(--accent);
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 8px;
+        border-radius: 6px;
+        position: relative;
+      }
+
+      .footer-link::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 6px;
+        background: var(--accent);
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+
+      .footer-link:hover {
+        color: white;
+        transform: translateY(-1px);
+      }
+
+      .footer-link:hover::before {
+        opacity: 0.2;
+      }
+
+      .footer-link span {
+        position: relative;
+        z-index: 1;
+      }
+
+      .footer-divider {
+        width: 1px;
+        height: 12px;
+        background: var(--border);
+        margin: 0 8px;
+      }
+
+      .footer-note {
+        color: var(--muted);
+        font-size: 11px;
+        opacity: 0.7;
+        letter-spacing: 0.3px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>Hedera Stalker</h1>
+        <p class="subtitle">
+          Track Hedera account balances like a stalker. Admin password required
+          to add new accounts (because I am not letting just anyone stalk around
+          here) 🕵️‍♂️
+        </p>
+        <div class="stats-bar">
+          <div class="stat-item">
+            <div class="stat-label">Total Accounts</div>
+            <div class="stat-value" id="totalAccounts">-</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-label">Total Balance</div>
+            <div class="stat-value" id="totalBalance">- HBAR</div>
+          </div>
+          <div class="stat-item stat-item-with-action">
+            <div>
+              <div class="stat-label">Last Updated</div>
+              <div class="stat-value" id="lastUpdated">-</div>
+            </div>
+            <button
+              class="refresh-btn-stat"
+              id="refreshBtn"
+              title="Refresh all balances"
+            >
+              Refresh
+            </button>
+          </div>
+        </div>
+      </header>
+
+      <div class="add-account-section">
+        <div class="add-account-header" id="addAccountHeader">
+          <h2>➕ Add Account</h2>
+          <span class="toggle-icon" id="toggleIcon">▼</span>
+        </div>
+        <div class="add-account-form" id="addAccountForm">
+          <div class="message" id="formMessage"></div>
+          <form id="accountForm">
+            <div class="form-group">
+              <label for="accountId">Hedera Account ID *</label>
+              <input
+                type="text"
+                id="accountId"
+                name="accountId"
+                placeholder="0.0.123456"
+                required
+                pattern="[0-9]+\.[0-9]+\.[0-9]+"
+                title="Format: 0.0.123456"
+              />
+            </div>
+            <div class="form-group">
+              <label for="accountName">Account Name (optional)</label>
+              <input
+                type="text"
+                id="accountName"
+                name="accountName"
+                placeholder="My Payer Account"
+              />
+            </div>
+            <div class="form-group">
+              <label for="adminPassword">Admin Password *</label>
+              <input
+                type="password"
+                id="adminPassword"
+                name="adminPassword"
+                placeholder="Enter admin password"
+                required
+              />
+            </div>
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary" id="submitBtn">
+                Add Account
+              </button>
+              <button type="button" class="btn btn-secondary" id="cancelBtn">
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div id="accountsGrid" class="accounts-grid">
+        <div class="loading">Loading accounts...</div>
+      </div>
+
+      <footer>
+        <div class="footer-content">
+          <div style="display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap;">
+            <span>Proudly built with</span>
+            <span style="color: var(--accent); font-weight: 600;">Cursor.ai</span>
+            <span>by</span>
+            <a
+              href="https://github.com/mhrsntrk"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="footer-link"
+            >
+              <span>@mhrsntrk</span>
+            </a>
+          </div>
+          <div class="footer-note">
+            🚀 Open source • Built for stalkers worldwide
+          </div>
+        </div>
+      </footer>
+    </div>
+
+    <script>
+      // Easter egg for developers who inspect the console
+      console.log(
+        '%c🔍 Hey stalker!',
+        'color: #7A3CFF; font-size: 24px; font-weight: bold;',
+      );
+      console.log(
+        '%cYou are in the wrong territory!',
+        'color: #ef4444; font-size: 16px; font-weight: bold;',
+      );
+      console.log(
+        '%cThis is a Hedera account monitoring app. What are you looking for? 👀',
+        'color: #9AA3B2; font-size: 16px;',
+      );
+      console.log(
+        '%cIf you are here to contribute, the code is open-source! 🚀',
+        'color: #22c55e; font-size: 16px;',
+      );
+
+      // Sanitize user input to prevent XSS attacks
+      function sanitizeHtml(str) {
+        if (typeof str !== 'string') return '';
+        const div = document.createElement('div');
+        div.textContent = str;
+        return div.innerHTML;
+      }
+
+      // Escape special characters for HTML
+      function escapeHtml(text) {
+        if (typeof text !== 'string') return '';
+        const map = {
+          '&': '&amp;',
+          '<': '&lt;',
+          '>': '&gt;',
+          '"': '&quot;',
+          "'": '&#039;',
+        };
+        return text.replace(/[&<>"']/g, (m) => map[m]);
+      }
+
+       function formatHBAR(value) {
+         return new Intl.NumberFormat('en-US', {
+           minimumFractionDigits: 2,
+           maximumFractionDigits: 4,
+         }).format(value);
+       }
+
+      function formatPercent(value) {
+        const sign = value >= 0 ? '+' : '';
+        return `${sign}${value.toFixed(2)}%`;
+      }
+
+      function formatDate(dateString) {
+        if (!dateString) return 'Never';
+        const date = new Date(dateString);
+        return date.toLocaleString();
+      }
+
+      function getChangeClass(value) {
+        if (value > 0) return 'positive';
+        if (value < 0) return 'negative';
+        return 'neutral';
+      }
+
+      function createAccountCard(account) {
+        // Sanitize all user inputs to prevent XSS
+        const accountName = escapeHtml(account.name || account.accountId);
+        const accountId = escapeHtml(account.accountId);
+        const lastUpdated = account.lastUpdated
+          ? escapeHtml(formatDate(account.lastUpdated))
+          : 'Never updated';
+        const isLowBalance = account.currentBalance < 1;
+        const cardClass = isLowBalance
+          ? 'account-card low-balance'
+          : 'account-card';
+        const balanceClass = isLowBalance ? 'balance low' : 'balance';
+
+        return `
+                <div class="${cardClass}">
+                    ${
+                      isLowBalance
+                        ? `
+                    <div class="low-balance-warning">
+                        <span class="low-balance-warning-icon">⚠️</span>
+                        <span class="low-balance-warning-text">Low Balance Warning: Account balance is below 1 HBAR!</span>
+                    </div>
+                    `
+                        : ''
+                    }
+                    <div class="account-header">
+                        <div>
+                            <div class="account-name">${accountName}</div>
+                            <div class="account-id">${accountId}</div>
+                        </div>
+                    </div>
+                    <div class="${balanceClass}">${formatHBAR(account.currentBalance)} HBAR</div>
+                    <div class="change-section">
+                        <div class="change-item">
+                            <div class="change-label">Daily</div>
+                            ${account.dailyChange.available !== false ? `
+                            <div class="change-value ${getChangeClass(account.dailyChange.change)}">
+                                ${formatHBAR(Math.abs(account.dailyChange.change))}
+                            </div>
+                            <div class="change-percent ${getChangeClass(account.dailyChange.changePercent)}">
+                                ${formatPercent(account.dailyChange.changePercent)}
+                            </div>
+                            ` : `
+                            <div class="change-value neutral" style="font-size: 12px; opacity: 0.7;">
+                                Not available yet
+                            </div>
+                            `}
+                        </div>
+                        <div class="change-item">
+                            <div class="change-label">Weekly</div>
+                            ${account.weeklyChange.available !== false ? `
+                            <div class="change-value ${getChangeClass(account.weeklyChange.change)}">
+                                ${formatHBAR(Math.abs(account.weeklyChange.change))}
+                            </div>
+                            <div class="change-percent ${getChangeClass(account.weeklyChange.changePercent)}">
+                                ${formatPercent(account.weeklyChange.changePercent)}
+                            </div>
+                            ` : `
+                            <div class="change-value neutral" style="font-size: 12px; opacity: 0.7;">
+                                Not available yet
+                            </div>
+                            `}
+                        </div>
+                        <div class="change-item">
+                            <div class="change-label">Monthly</div>
+                            ${account.monthlyChange.available !== false ? `
+                            <div class="change-value ${getChangeClass(account.monthlyChange.change)}">
+                                ${formatHBAR(Math.abs(account.monthlyChange.change))}
+                            </div>
+                            <div class="change-percent ${getChangeClass(account.monthlyChange.changePercent)}">
+                                ${formatPercent(account.monthlyChange.changePercent)}
+                            </div>
+                            ` : `
+                            <div class="change-value neutral" style="font-size: 12px; opacity: 0.7;">
+                                Not available yet
+                            </div>
+                            `}
+                        </div>
+                    </div>
+                    <div class="last-updated">${lastUpdated}</div>
+                </div>
+            `;
+      }
+
+      async function loadDashboard() {
+        const grid = document.getElementById('accountsGrid');
+        grid.innerHTML = '<div class="loading">Loading accounts...</div>';
+
+        try {
+          const response = await fetch('/api/dashboard/data');
+          const data = await response.json();
+
+          if (data.accounts.length === 0) {
+            grid.innerHTML = `
+                        <div class="empty-state">
+                            <h2>No accounts found</h2>
+                            <p>Add accounts via the API to start monitoring</p>
+                        </div>
+                    `;
+            return;
+          }
+
+          // Update stats
+          const totalAccounts = data.accounts.length;
+          const totalBalance = data.accounts.reduce(
+            (sum, acc) => sum + acc.currentBalance,
+            0,
+          );
+          const lastUpdated = data.accounts
+            .map((acc) => (acc.lastUpdated ? new Date(acc.lastUpdated) : null))
+            .filter((d) => d !== null)
+            .sort((a, b) => b - a)[0];
+
+          document.getElementById('totalAccounts').textContent = totalAccounts;
+          document.getElementById('totalBalance').textContent =
+            formatHBAR(totalBalance) + ' HBAR';
+          document.getElementById('lastUpdated').textContent = lastUpdated
+            ? formatDate(lastUpdated)
+            : 'Never';
+
+          // Render accounts
+          grid.innerHTML = data.accounts.map(createAccountCard).join('');
+        } catch (error) {
+          grid.innerHTML = `
+                    <div class="empty-state">
+                        <h2>Error loading dashboard</h2>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+          console.error('Error loading dashboard:', error);
+        }
+      }
+
+      function toggleAddForm() {
+        const form = document.getElementById('addAccountForm');
+        const icon = document.getElementById('toggleIcon');
+        form.classList.toggle('show');
+        icon.classList.toggle('rotated');
+      }
+
+      async function handleAddAccount(event) {
+        event.preventDefault();
+
+        const submitBtn = document.getElementById('submitBtn');
+        const messageDiv = document.getElementById('formMessage');
+        const form = document.getElementById('accountForm');
+
+        const accountId = document.getElementById('accountId').value.trim();
+        const accountName = document.getElementById('accountName').value.trim();
+        const adminPassword = document.getElementById('adminPassword').value;
+
+        // Validate and sanitize inputs
+        if (!accountId) {
+          showMessage('Account ID is required', 'error');
+          return;
+        }
+
+        // Validate account ID format (strict regex to prevent injection)
+        if (!/^[0-9]+\.[0-9]+\.[0-9]+$/.test(accountId)) {
+          showMessage(
+            'Invalid account ID format. Expected: 0.0.123456',
+            'error',
+          );
+          return;
+        }
+
+        // Validate account name length
+        if (accountName && accountName.length > 100) {
+          showMessage('Account name must be less than 100 characters', 'error');
+          return;
+        }
+
+        // Validate password length
+        if (adminPassword && adminPassword.length > 200) {
+          showMessage('Password must be less than 200 characters', 'error');
+          return;
+        }
+
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Adding...';
+        hideMessage();
+
+        try {
+          const response = await fetch('/api/accounts', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              accountId: accountId,
+              name: accountName || null,
+              adminPassword: adminPassword,
+            }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok) {
+            showMessage(
+              `Account ${escapeHtml(accountId)} added successfully!`,
+              'success',
+            );
+            form.reset();
+            // Reload dashboard after a short delay
+            setTimeout(() => {
+              loadDashboard();
+              toggleAddForm();
+            }, 1500);
+          } else {
+            const errorMsg =
+              data.message || `Failed to add account (HTTP ${response.status})`;
+            showMessage(errorMsg, 'error');
+          }
+        } catch (error) {
+          showMessage(`Error: ${error.message}`, 'error');
+        } finally {
+          submitBtn.disabled = false;
+          submitBtn.textContent = 'Add Account';
+        }
+      }
+
+      function resetForm() {
+        document.getElementById('accountForm').reset();
+        hideMessage();
+        toggleAddForm();
+      }
+
+      function showMessage(message, type) {
+        const messageDiv = document.getElementById('formMessage');
+        messageDiv.textContent = message;
+        messageDiv.className = `message ${type} show`;
+      }
+
+      function hideMessage() {
+        const messageDiv = document.getElementById('formMessage');
+        messageDiv.classList.remove('show');
+      }
+
+      async function refreshAllBalances() {
+        const btn = document.getElementById('refreshBtn');
+        if (btn) {
+          btn.disabled = true;
+          btn.textContent = 'Refreshing...';
+        }
+
+        try {
+          // Trigger balance fetch for all accounts
+          await fetch('/api/scheduler/trigger', { method: 'POST' });
+
+          // Wait a bit for the fetch to complete, then reload dashboard
+          setTimeout(() => {
+            loadDashboard();
+            if (btn) {
+              btn.disabled = false;
+              btn.textContent = 'Refresh';
+            }
+          }, 1500);
+        } catch (error) {
+          console.error('Error refreshing balance:', error);
+          if (btn) {
+            btn.disabled = false;
+            btn.textContent = 'Refresh';
+          }
+          // Still reload dashboard to show any updates
+          setTimeout(loadDashboard, 500);
+        }
+      }
+
+      // Set up event listeners (script runs after DOM is parsed)
+      // Refresh button
+      const refreshBtn = document.getElementById('refreshBtn');
+      if (refreshBtn) {
+        refreshBtn.addEventListener('click', refreshAllBalances);
+      }
+
+      // Add account header toggle
+      const addAccountHeader = document.getElementById('addAccountHeader');
+      if (addAccountHeader) {
+        addAccountHeader.addEventListener('click', toggleAddForm);
+      }
+
+      // Form submission
+      const accountForm = document.getElementById('accountForm');
+      if (accountForm) {
+        accountForm.addEventListener('submit', function (event) {
+          event.preventDefault();
+          handleAddAccount(event);
+        });
+      }
+
+      // Cancel button
+      const cancelBtn = document.getElementById('cancelBtn');
+      if (cancelBtn) {
+        cancelBtn.addEventListener('click', resetForm);
+      }
+
+      // Load dashboard on page load
+      loadDashboard();
+
+      // Auto-refresh every 5 minutes
+      setInterval(loadDashboard, 5 * 60 * 1000);
+    </script>
+  </body>
+</html>

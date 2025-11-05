@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: hedera-stalker-db
+    environment:
+      POSTGRES_USER: ${DB_USERNAME:-hedera_stalker}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-hedera_stalker_password}
+      POSTGRES_DB: ${DB_DATABASE:-hedera_stalker}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USERNAME:-hedera_stalker}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - hedera-stalker-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: hedera-stalker-app
+    environment:
+      DB_HOST: postgres
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USERNAME: ${DB_USERNAME:-hedera_stalker}
+      DB_PASSWORD: ${DB_PASSWORD:-hedera_stalker_password}
+      DB_DATABASE: ${DB_DATABASE:-hedera_stalker}
+      HEDERA_NETWORK: ${HEDERA_NETWORK:-testnet}
+      PORT: ${PORT:-3000}
+    ports:
+      - "${PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - hedera-stalker-network
+    restart: unless-stopped
+
+networks:
+  hedera-stalker-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
