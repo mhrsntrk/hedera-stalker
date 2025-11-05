@@ -4,6 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Hedera Account Monitor</title>
+    <link rel="icon" type="image/png" href="/hedera-stalker-logo.png" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
@@ -176,6 +177,7 @@
 
          .container {
            max-width: 100%;
+           padding-bottom: 120px; /* Add padding to prevent footer overlap */
          }
 
          .accounts-grid {
@@ -633,6 +635,65 @@
         opacity: 0.7;
         letter-spacing: 0.3px;
       }
+
+      /* Floating Telegram Button */
+      .telegram-float-button {
+        position: fixed;
+        top: 24px;
+        right: 24px;
+        width: 128px;
+        height: 128px;
+        border-radius: 50%;
+        background: rgba(20, 25, 39, 0.9);
+        backdrop-filter: blur(10px);
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 8px 30px rgba(0, 0, 0, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 1000;
+        border: 2px solid rgba(122, 60, 255, 0.3);
+        overflow: visible;
+        padding: 0;
+      }
+
+      .telegram-float-button:hover {
+        transform: scale(1.1);
+        box-shadow: 0 6px 30px rgba(122, 60, 255, 0.4), 0 12px 40px rgba(0, 0, 0, 0.4);
+        border-color: rgba(122, 60, 255, 0.6);
+      }
+
+      .telegram-float-button:active {
+        transform: scale(0.95);
+      }
+
+      .telegram-float-button img {
+        width: 88px;
+        height: 88px;
+        object-fit: contain;
+        display: block;
+        pointer-events: none;
+      }
+
+      .telegram-float-button.hidden {
+        display: none;
+      }
+
+      @media (max-width: 768px) {
+        .telegram-float-button {
+          width: 56px;
+          height: 56px;
+          top: 12px;
+          right: 12px;
+          padding: 0;
+        }
+
+        .telegram-float-button img {
+          width: 40px;
+          height: 40px;
+        }
+      }
     </style>
   </head>
   <body>
@@ -950,6 +1011,14 @@
           // Store network globally for hashscan links
           currentNetwork = network;
 
+          // Setup Telegram button if bot username is available
+          if (data.telegramBotUsername) {
+            setupTelegramButton(data.telegramBotUsername);
+          } else {
+            // Hide button if no username
+            setupTelegramButton(null);
+          }
+
           // Ensure accounts is an array
           const accounts = Array.isArray(data.accounts) ? data.accounts : [];
 
@@ -1187,11 +1256,42 @@
         cancelBtn.addEventListener('click', resetForm);
       }
 
+      // Setup Telegram button - must be defined before loadDashboard
+      function setupTelegramButton(botUsername) {
+        const button = document.getElementById('telegramFloatButton');
+        console.log('Setting up Telegram button with username:', botUsername, 'Button found:', !!button);
+        if (botUsername && button) {
+          button.href = `https://t.me/${botUsername}`;
+          button.classList.remove('hidden');
+          console.log('Telegram button shown');
+        } else if (button) {
+          button.classList.add('hidden');
+          console.log('Telegram button hidden');
+        }
+      }
+
       // Load dashboard on page load
       loadDashboard();
 
       // Auto-refresh every 5 minutes
       setInterval(loadDashboard, 5 * 60 * 1000);
     </script>
+
+    <!-- Floating Telegram Button -->
+    <a
+      id="telegramFloatButton"
+      class="telegram-float-button hidden"
+      href="#"
+      target="_blank"
+      rel="noopener noreferrer"
+      title="Open Telegram Bot"
+    >
+      <img 
+        src="/hedera-stalker-logo.png" 
+        alt="Telegram Bot"
+        onerror="console.error('Failed to load logo image:', this.src); this.style.display='none';"
+        onload="console.log('Logo image loaded successfully')"
+      />
+    </a>
   </body>
 </html>
