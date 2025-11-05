@@ -3,6 +3,7 @@ import { Cron, CronExpression } from '@nestjs/schedule';
 import { AccountsService } from '../accounts/accounts.service';
 import { BalanceHistoryService } from '../balance-history/balance-history.service';
 import { HederaService } from '../hedera/hedera.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class SchedulerService implements OnModuleInit {
@@ -12,6 +13,7 @@ export class SchedulerService implements OnModuleInit {
     private readonly accountsService: AccountsService,
     private readonly balanceHistoryService: BalanceHistoryService,
     private readonly hederaService: HederaService,
+    private readonly notificationsService: NotificationsService,
   ) {}
 
   onModuleInit() {
@@ -54,6 +56,14 @@ export class SchedulerService implements OnModuleInit {
           this.logger.log(
             `✓ Recorded balance for ${account.accountId}: ${balance.toFixed(4)} HBAR`,
           );
+          
+          // Check for low balance and send notification if needed
+          await this.notificationsService.notifyLowBalance(
+            account.accountId,
+            account.name || null,
+            balance,
+          );
+          
           successCount++;
         } else {
           this.logger.warn(`✗ Failed to fetch balance for ${account.accountId}`);

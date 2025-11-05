@@ -8,6 +8,8 @@ import { BalanceHistoryModule } from './balance-history/balance-history.module';
 import { HederaModule } from './hedera/hedera.module';
 import { SchedulerModule } from './scheduler/scheduler.module';
 import { DashboardModule } from './dashboard/dashboard.module';
+import { NotificationsModule } from './notifications/notifications.module';
+import { SubscriptionsModule } from './subscriptions/subscriptions.module';
 
 @Module({
   imports: [
@@ -32,6 +34,8 @@ import { DashboardModule } from './dashboard/dashboard.module';
     HederaModule,
     SchedulerModule,
     DashboardModule,
+    SubscriptionsModule,
+    NotificationsModule,
   ],
   controllers: [AppController],
 })
