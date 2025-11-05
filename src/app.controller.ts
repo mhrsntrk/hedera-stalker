@@ -15,5 +15,14 @@ export class AppController {
       res.status(404).send('Dashboard not found');
     }
   }
+
+  @Get('health')
+  health() {
+    return {
+      status: 'ok',
+      timestamp: new Date().toISOString(),
+      service: 'hedera-stalker',
+    };
+  }
 }
 

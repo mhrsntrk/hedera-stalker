@@ -1,8 +1,11 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 
 @Injectable()
 export class AuthService {
+  constructor(private configService: ConfigService) {}
+
   /**
    * Hash a password using bcrypt
    */
@@ -25,7 +28,7 @@ export class AuthService {
    * Verify admin password against the stored hash from environment
    */
   async verifyAdminPassword(providedPassword: string): Promise<boolean> {
-    const adminPasswordHash = process.env.ADMIN_PASSWORD_HASH;
+    const adminPasswordHash = this.configService.get<string>('ADMIN_PASSWORD_HASH');
     
     if (!adminPasswordHash) {
       // If no hash is set, password protection is disabled

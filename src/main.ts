@@ -33,7 +33,25 @@ async function bootstrap() {
     }),
   );
 
-  app.enableCors();
+  // CORS configuration - allow specific origins in production
+  const allowedOrigins = process.env.CORS_ORIGINS
+    ? process.env.CORS_ORIGINS.split(',')
+    : ['http://localhost:3000', 'http://localhost:3001'];
+  
+  app.enableCors({
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps, curl, Postman)
+      if (!origin) return callback(null, true);
+      
+      if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+  });
+  
   await app.listen(process.env.PORT || 3000);
 }
 bootstrap();

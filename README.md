@@ -244,6 +244,76 @@ npm run lint
 npm run format
 ```
 
+## CapRover Deployment
+
+This application is ready to deploy to CapRover. Here's how:
+
+### Prerequisites
+
+1. CapRover instance set up and running
+2. PostgreSQL one-click app installed in CapRover (or a PostgreSQL instance accessible from your app)
+
+### Deployment Steps
+
+1. **Set up PostgreSQL in CapRover:**
+   - Go to CapRover dashboard → One-Click Apps/Databases
+   - Install PostgreSQL
+   - Note the service name (usually `srv-captain--postgresql`)
+   - Note the database credentials
+
+2. **Create the app in CapRover:**
+   - Go to Apps → Create New App
+   - Name it (e.g., `hedera-stalker`)
+   - Enable HTTPS if desired
+
+3. **Connect your repository:**
+   - Go to App Settings → App Configs
+   - Connect your GitHub repository
+   - Set branch to `main` (or your default branch)
+   - CapRover will automatically detect the `captain-definition` file
+
+4. **Set environment variables:**
+   - Go to App Settings → App Configs → Environment Variables
+   - Add the following:
+     ```
+     # Database Configuration
+     DB_HOST=srv-captain--postgresql
+     DB_PORT=5432
+     DB_USERNAME=<your_postgres_user>
+     DB_PASSWORD=<your_postgres_password>
+     DB_DATABASE=hedera_stalker
+     DB_SYNCHRONIZE=false
+     DB_LOGGING=false
+     
+     # Hedera Network
+     HEDERA_NETWORK=mainnet
+     
+     # Security
+     ADMIN_PASSWORD_HASH=<your_bcrypt_hash>
+     
+     # CORS (optional - comma-separated list of allowed origins)
+     CORS_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+     
+     # Environment
+     NODE_ENV=production
+     ```
+   - To generate password hash: `node scripts/generate-password-hash.js <your_password>`
+   - **Important**: Set `DB_SYNCHRONIZE=false` in production to prevent accidental schema changes
+
+5. **Deploy:**
+   - Click "Save & Update" in App Configs
+   - CapRover will build and deploy automatically
+   - The app will be available at your CapRover domain
+
+### Important Notes for CapRover
+
+- The app listens on the `PORT` environment variable (CapRover sets this automatically)
+- Database connection uses the PostgreSQL service name (e.g., `srv-captain--postgresql`)
+- Make sure PostgreSQL is accessible from your app container
+- Health checks are configured for automatic recovery (endpoint: `/health`)
+- Set `DB_SYNCHRONIZE=false` in production to prevent accidental database schema changes
+- Configure `CORS_ORIGINS` with your actual domain(s) for production security
+
 ## Production Considerations
 
 1. Set `synchronize: false` in `app.module.ts` TypeORM configuration and use migrations
@@ -252,6 +322,7 @@ npm run format
 4. Configure CORS appropriately
 5. Use a reverse proxy (nginx) for production
 6. Set up proper database backups
+7. For CapRover: Use HTTPS and set up proper domain names
 
 ## License
 
