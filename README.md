@@ -7,6 +7,7 @@ A simple NestJS application to monitor Hedera account balances with a dashboard.
 - 📊 **Dashboard**: Responsive dashboard showing account balances and changes
 - ⏰ **Hourly Tracking**: Automatically fetches and stores account balances every hour
 - 📈 **Change Tracking**: View daily, weekly, and monthly balance changes in HBARs and percentages
+- 🔔 **Low Balance Notifications**: Get notified via Telegram when account balances fall below threshold (default: 1 HBAR)
 - 🗄️ **PostgreSQL**: Stores balance history in a PostgreSQL database
 - 🐳 **Dockerized**: Easy setup with Docker Compose
 
@@ -118,6 +119,14 @@ PORT=3000
 # Security Configuration
 # Generate password hash using: node scripts/generate-password-hash.js <your_password>
 ADMIN_PASSWORD_HASH=your_bcrypt_hash_here
+
+# Notification Configuration (Optional - Telegram Bot)
+# Set up Telegram notifications to get alerts when account balances are low
+# See "Notifications" section below for setup instructions
+# Users subscribe via bot commands - no need for TELEGRAM_CHAT_ID
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
+# Low balance threshold in HBAR (default: 1)
+LOW_BALANCE_THRESHOLD=1
 ```
 
 3. **Start PostgreSQL (if not using Docker):**
@@ -166,6 +175,95 @@ Open your browser and navigate to `http://localhost:3000` to see the dashboard w
 - `GET /api/accounts/:id` - Get account details
 - `PATCH /api/accounts/:id` - Update account (name, isActive)
 - `DELETE /api/accounts/:id` - Remove an account
+- `POST /api/scheduler/test-notification` - Test Telegram notification setup (sends to all subscribers)
+- `POST /api/telegram/webhook` - Telegram webhook endpoint (handles bot commands)
+
+## Notifications
+
+The application uses a **subscription-based Telegram notification system**. Users can subscribe/unsubscribe via bot commands, and all subscribers receive notifications when account balances fall below the threshold (default: 1 HBAR).
+
+### Setting Up Telegram Bot
+
+1. **Create a Telegram Bot (or use existing):**
+   - Open Telegram and search for [@BotFather](https://t.me/BotFather)
+   - Send `/newbot` command
+   - Follow the prompts to name your bot
+   - BotFather will give you a **bot token** (looks like: `123456789:ABCdefGHIjklMNOpqrsTUVwxyz`)
+   - Copy the token
+   - **Note**: The bot handle is `@hedera_stalker_bot` - users can find it at [t.me/hedera_stalker_bot](https://t.me/hedera_stalker_bot)
+
+2. **Configure Environment Variables:**
+   Add these to your `.env` file:
+   ```env
+   TELEGRAM_BOT_TOKEN=your_bot_token_here
+   LOW_BALANCE_THRESHOLD=1
+   ```
+
+3. **Set Up Webhook (Required for Bot Commands):**
+   
+   After starting your application, you need to configure Telegram to send updates to your webhook endpoint.
+   
+   **For local development:**
+   - Use a tool like [ngrok](https://ngrok.com/) to expose your local server:
+     ```bash
+     ngrok http 3000
+     ```
+   - Copy the HTTPS URL (e.g., `https://abc123.ngrok.io`)
+   - Set the webhook:
+     ```bash
+     curl -X POST "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=https://abc123.ngrok.io/api/telegram/webhook"
+     ```
+   
+   **For production (CapRover/deployed apps):**
+   - Set the webhook to your production URL:
+     ```bash
+     curl -X POST "https://api.telegram.org/bot<YOUR_BOT_TOKEN>/setWebhook?url=https://yourdomain.com/api/telegram/webhook"
+     ```
+
+4. **Subscribe to Notifications:**
+   - Find the bot on Telegram: [@hedera_stalker_bot](https://t.me/hedera_stalker_bot)
+   - Start a chat with the bot
+   - Send `/start` or `/subscribe` command
+   - You'll receive a confirmation message
+
+### How It Works
+
+- **Subscription System**: Users must subscribe via bot commands (`/start` or `/subscribe`) to receive notifications
+- **Automatic Notifications**: The scheduler checks account balances every hour
+- **Multi-User Support**: All active subscribers receive notifications when any account balance is below the threshold
+- **Notification Content**:
+  - Account name (if set) or account ID
+  - Current balance
+  - Threshold value
+
+### Bot Commands
+
+Users can interact with the bot using these commands:
+
+- `/start` or `/subscribe` - Subscribe to balance notifications
+- `/unsubscribe` - Stop receiving notifications
+- `/status` - Check your subscription status
+- `/help` - Show available commands
+
+### Optional: Customize Threshold
+
+You can set a custom threshold in your `.env` file:
+```env
+LOW_BALANCE_THRESHOLD=0.5  # Alert when balance is below 0.5 HBAR
+```
+
+### Testing Notifications
+
+Send a POST request to test notifications:
+```bash
+curl -X POST http://localhost:3000/api/scheduler/test-notification
+```
+
+This will send a test message to all active subscribers.
+
+### Disabling Notifications
+
+If you don't want notifications, simply don't set `TELEGRAM_BOT_TOKEN`. The application will work normally without notifications. Users won't be able to subscribe if the bot token is not configured.
 
 ## Security
 
@@ -212,6 +310,7 @@ The application automatically fetches account balances every hour using NestJS's
 
 - **accounts**: Stores account information (accountId, name, isActive)
 - **balance_history**: Stores hourly balance snapshots (accountId, balance, recordedAt)
+- **subscriptions**: Stores Telegram notification subscriptions (chatId, firstName, username, isActive, subscribedAt)
 
 ## Development
 
@@ -296,6 +395,12 @@ This application is ready to deploy to CapRover. Here's how:
      
      # CORS (optional - comma-separated list of allowed origins)
      CORS_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+     
+     # Notifications (optional - Telegram Bot)
+     # Users subscribe via bot commands - see README "Notifications" section
+     TELEGRAM_BOT_TOKEN=your_telegram_bot_token_here
+     LOW_BALANCE_THRESHOLD=1
+     # After deployment, set webhook: curl -X POST "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://yourdomain.com/api/telegram/webhook"
      
      # Environment
      NODE_ENV=production
