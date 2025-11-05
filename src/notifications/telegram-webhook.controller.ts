@@ -9,6 +9,9 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { SubscriptionsService } from '../subscriptions/subscriptions.service';
+import { AccountsService } from '../accounts/accounts.service';
+import { HederaService } from '../hedera/hedera.service';
+import { NotificationsService } from './notifications.service';
 
 interface TelegramUpdate {
   update_id: number;
@@ -40,6 +43,9 @@ export class TelegramWebhookController {
   constructor(
     private readonly configService: ConfigService,
     private readonly subscriptionsService: SubscriptionsService,
+    private readonly accountsService: AccountsService,
+    private readonly hederaService: HederaService,
+    private readonly notificationsService: NotificationsService,
   ) {
     this.telegramBotToken = this.configService.get<string>('TELEGRAM_BOT_TOKEN');
     this.webhookSecret = this.configService.get<string>('TELEGRAM_WEBHOOK_SECRET');
@@ -130,6 +136,8 @@ export class TelegramWebhookController {
               `Use /subscribe to start receiving notifications.`,
           );
         }
+      } else if (command === '/check') {
+        await this.handleHealthCheck(chatId);
       } else if (command === '/help') {
         await this.sendMessage(
           chatId,
@@ -137,6 +145,7 @@ export class TelegramWebhookController {
             `/start or /subscribe - Subscribe to balance notifications\n` +
             `/unsubscribe - Stop receiving notifications\n` +
             `/status - Check your subscription status\n` +
+            `/check - Perform a health check on the service\n` +
             `/help - Show this help message`,
         );
       } else {
@@ -166,6 +175,68 @@ export class TelegramWebhookController {
           `Failed to send error message to chat ${chatId}: ${sendError.message}`,
         );
       }
+    }
+  }
+
+  private async handleHealthCheck(chatId: string): Promise<void> {
+    try {
+      const checks: string[] = [];
+      let allHealthy = true;
+
+      // Check bot token
+      if (this.telegramBotToken) {
+        checks.push('✅ Bot token configured');
+      } else {
+        checks.push('❌ Bot token not configured');
+        allHealthy = false;
+      }
+
+      // Check database connectivity and subscriptions
+      try {
+        const subscriptions = await this.subscriptionsService.getAllActiveSubscriptions();
+        checks.push(`✅ Database connected (${subscriptions.length} active subscriber(s))`);
+      } catch (error) {
+        checks.push(`❌ Database error: ${error.message}`);
+        allHealthy = false;
+      }
+
+      // Check accounts
+      try {
+        const accounts = await this.accountsService.findAll();
+        checks.push(`✅ Accounts service (${accounts.length} tracked account(s))`);
+      } catch (error) {
+        checks.push(`❌ Accounts service error: ${error.message}`);
+        allHealthy = false;
+      }
+
+      // Check Hedera network
+      try {
+        const network = this.hederaService.getNetwork();
+        checks.push(`✅ Hedera network: ${network}`);
+      } catch (error) {
+        checks.push(`❌ Hedera service error: ${error.message}`);
+        allHealthy = false;
+      }
+
+      // Check low balance threshold
+      try {
+        const threshold = this.notificationsService.getLowBalanceThreshold();
+        checks.push(`✅ Low balance threshold: ${threshold} HBAR`);
+      } catch (error) {
+        checks.push(`❌ Notifications service error: ${error.message}`);
+        allHealthy = false;
+      }
+
+      const status = allHealthy ? '✅ *Service Health Check - All Systems Operational*' : '⚠️ *Service Health Check - Issues Detected*';
+      const message = `${status}\n\n${checks.join('\n')}\n\n_Checked at: ${new Date().toISOString()}_`;
+
+      await this.sendMessage(chatId, message);
+    } catch (error) {
+      this.logger.error(`Error in health check: ${error.message}`, error.stack);
+      await this.sendMessage(
+        chatId,
+        `❌ Health check failed: ${error.message}`,
+      );
     }
   }
 
