@@ -72,32 +72,49 @@ export class BalanceHistoryService {
 
     switch (period) {
       case 'day':
+        // 24 hours ago
         periodStart = new Date(now.getTime() - 24 * 60 * 60 * 1000);
         break;
       case 'week':
+        // 7 days ago
         periodStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         break;
       case 'month':
+        // 30 days ago
         periodStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
         break;
     }
 
+    // Get the latest balance (current)
     const current = await this.getLatestBalance(accountId);
-    const previous = await this.getBalanceAtTime(accountId, periodStart);
-
-    if (!current || !previous) {
+    if (!current) {
+      // No balance data available yet
       return null;
     }
 
-    const change = current.balance - previous.balance;
+    // Get the balance at the start of the period (previous)
+    const previous = await this.getBalanceAtTime(accountId, periodStart);
+    if (!previous) {
+      // Not enough historical data for this period
+      return null;
+    }
+
+    // Calculate change and percentage
+    const currentBalance = Number(current.balance);
+    const previousBalance = Number(previous.balance);
+    const change = currentBalance - previousBalance;
     const changePercent =
-      previous.balance > 0
-        ? ((current.balance - previous.balance) / previous.balance) * 100
-        : 0;
+      previousBalance > 0
+        ? ((change / previousBalance) * 100)
+        : change > 0
+          ? 100
+          : change < 0
+            ? -100
+            : 0;
 
     return {
-      current: Number(current.balance),
-      previous: Number(previous.balance),
+      current: currentBalance,
+      previous: previousBalance,
       change,
       changePercent,
     };
