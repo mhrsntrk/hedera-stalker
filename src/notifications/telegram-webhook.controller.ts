@@ -48,28 +48,35 @@ export class TelegramWebhookController {
   @Post()
   @HttpCode(HttpStatus.OK)
   async handleWebhook(@Body() update: TelegramUpdate) {
-    // Verify webhook secret if configured (optional security measure)
-    if (this.webhookSecret) {
-      // Note: Telegram doesn't send a secret header, but you can implement
-      // custom verification logic here if needed
-    }
-
-    // Handle message updates
-    if (update.message) {
-      const message = update.message;
-      const chatId = message.chat.id.toString();
-      const text = message.text?.trim() || '';
-      const from = message.from;
-
-      this.logger.log(`Received message from chat ${chatId}: ${text}`);
-
-      // Handle commands
-      if (text.startsWith('/')) {
-        await this.handleCommand(chatId, text, from, message.chat);
+    try {
+      // Verify webhook secret if configured (optional security measure)
+      if (this.webhookSecret) {
+        // Note: Telegram doesn't send a secret header, but you can implement
+        // custom verification logic here if needed
       }
-    }
 
-    return { ok: true };
+      // Handle message updates
+      if (update.message) {
+        const message = update.message;
+        const chatId = message.chat.id.toString();
+        const text = message.text?.trim() || '';
+        const from = message.from;
+
+        this.logger.log(`Received message from chat ${chatId}: ${text}`);
+
+        // Handle commands
+        if (text.startsWith('/')) {
+          // Extract command without parameters (e.g., "/start hello" -> "/start")
+          const command = text.split(' ')[0].toLowerCase();
+          await this.handleCommand(chatId, command, from, message.chat);
+        }
+      }
+
+      return { ok: true };
+    } catch (error) {
+      this.logger.error(`Error in webhook handler: ${error.message}`, error.stack);
+      return { ok: false, error: error.message };
+    }
   }
 
   private async handleCommand(
@@ -139,11 +146,26 @@ export class TelegramWebhookController {
         );
       }
     } catch (error) {
-      this.logger.error(`Error handling command: ${error.message}`, error.stack);
-      await this.sendMessage(
-        chatId,
-        `❌ An error occurred. Please try again later.`,
+      this.logger.error(
+        `Error handling command ${command} for chat ${chatId}: ${error.message}`,
+        error.stack,
       );
+      
+      // Try to send error message, but don't fail if that also fails
+      try {
+        // Don't expose internal error details to users, but log them
+        const userFriendlyMessage = error.message?.includes('relation') || 
+                                   error.message?.includes('table') ||
+                                   error.message?.includes('database')
+          ? `❌ Database error. Please ensure the database is properly configured and the subscriptions table exists.`
+          : `❌ An error occurred. Please try again later.\n\nIf the problem persists, check server logs for details.`;
+        
+        await this.sendMessage(chatId, userFriendlyMessage);
+      } catch (sendError) {
+        this.logger.error(
+          `Failed to send error message to chat ${chatId}: ${sendError.message}`,
+        );
+      }
     }
   }
 
