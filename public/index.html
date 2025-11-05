@@ -1059,8 +1059,6 @@
           grid.className = 'accounts-grid';
           grid.innerHTML = accounts.map(createAccountCard).join('');
         } catch (error) {
-          console.error('Error loading dashboard:', error);
-          
           // Show user-friendly error message
           let errorMessage = 'Failed to load dashboard data.';
           
@@ -1218,7 +1216,6 @@
             }
           }, 1500);
         } catch (error) {
-          console.error('Error refreshing balance:', error);
           if (btn) {
             btn.disabled = false;
             btn.textContent = 'Refresh';
@@ -1259,14 +1256,11 @@
       // Setup Telegram button - must be defined before loadDashboard
       function setupTelegramButton(botUsername) {
         const button = document.getElementById('telegramFloatButton');
-        console.log('Setting up Telegram button with username:', botUsername, 'Button found:', !!button);
         if (botUsername && button) {
           button.href = `https://t.me/${botUsername}`;
           button.classList.remove('hidden');
-          console.log('Telegram button shown');
         } else if (button) {
           button.classList.add('hidden');
-          console.log('Telegram button hidden');
         }
       }
 
@@ -1289,8 +1283,7 @@
       <img 
         src="/hedera-stalker-logo.png" 
         alt="Telegram Bot"
-        onerror="console.error('Failed to load logo image:', this.src); this.style.display='none';"
-        onload="console.log('Logo image loaded successfully')"
+        onerror="this.style.display='none';"
       />
     </a>
   </body>
