@@ -34,22 +34,49 @@ async function bootstrap() {
   );
 
   // CORS configuration - allow specific origins in production
+  // Normalize origins: trim, remove trailing slashes, and convert to lowercase for comparison
+  const normalizeOrigin = (url: string) => {
+    return url.trim().replace(/\/+$/, '').toLowerCase();
+  };
+  
   const allowedOrigins = process.env.CORS_ORIGINS
-    ? process.env.CORS_ORIGINS.split(',')
-    : ['http://localhost:3000', 'http://localhost:3001'];
+    ? process.env.CORS_ORIGINS.split(',').map(o => normalizeOrigin(o))
+    : [];
   
   app.enableCors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, curl, Postman)
-      if (!origin) return callback(null, true);
-      
-      if (allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
+      // Allow requests with no origin (like mobile apps, curl, Postman, same-origin requests)
+      if (!origin) {
+        return callback(null, true);
       }
+      
+      // In development, allow all origins
+      if (process.env.NODE_ENV !== 'production') {
+        return callback(null, true);
+      }
+      
+      // In production, check allowed origins
+      if (allowedOrigins.length === 0) {
+        // If no CORS_ORIGINS is set, allow all (for self-hosted apps on same domain)
+        // This is safe since the app is served from the same domain
+        return callback(null, true);
+      }
+      
+      // Normalize the incoming origin for comparison
+      const normalizedOrigin = normalizeOrigin(origin);
+      
+      // Check if origin is in allowed list (case-insensitive, trailing-slash insensitive)
+      if (allowedOrigins.includes(normalizedOrigin)) {
+        return callback(null, true);
+      }
+      
+      // Log for debugging
+      console.warn(`CORS: Origin "${origin}" (normalized: "${normalizedOrigin}") not in allowed list:`, allowedOrigins);
+      callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
+    methods: ['GET', 'POST', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   });
   
   await app.listen(process.env.PORT || 3000);
