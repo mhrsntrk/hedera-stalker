@@ -13,36 +13,44 @@ export class SubscriptionsService {
   ) {}
 
   async subscribe(chatId: string, firstName?: string, username?: string): Promise<Subscription> {
-    // Check if already subscribed
-    let subscription = await this.subscriptionsRepository.findOne({
-      where: { chatId },
-    });
+    try {
+      // Check if already subscribed
+      let subscription = await this.subscriptionsRepository.findOne({
+        where: { chatId },
+      });
 
-    if (subscription) {
-      // Reactivate if previously unsubscribed
-      if (!subscription.isActive) {
-        subscription.isActive = true;
-        subscription.firstName = firstName || subscription.firstName;
-        subscription.username = username || subscription.username;
-        await this.subscriptionsRepository.save(subscription);
-        this.logger.log(`Reactivated subscription for chat ID: ${chatId}`);
-      } else {
-        this.logger.log(`Chat ID ${chatId} is already subscribed`);
+      if (subscription) {
+        // Reactivate if previously unsubscribed
+        if (!subscription.isActive) {
+          subscription.isActive = true;
+          subscription.firstName = firstName || subscription.firstName;
+          subscription.username = username || subscription.username;
+          await this.subscriptionsRepository.save(subscription);
+          this.logger.log(`Reactivated subscription for chat ID: ${chatId}`);
+        } else {
+          this.logger.log(`Chat ID ${chatId} is already subscribed`);
+        }
+        return subscription;
       }
+
+      // Create new subscription
+      subscription = this.subscriptionsRepository.create({
+        chatId,
+        firstName,
+        username,
+        isActive: true,
+      });
+
+      await this.subscriptionsRepository.save(subscription);
+      this.logger.log(`New subscription created for chat ID: ${chatId}`);
       return subscription;
+    } catch (error) {
+      this.logger.error(
+        `Error subscribing chat ID ${chatId}: ${error.message}`,
+        error.stack,
+      );
+      throw error;
     }
-
-    // Create new subscription
-    subscription = this.subscriptionsRepository.create({
-      chatId,
-      firstName,
-      username,
-      isActive: true,
-    });
-
-    await this.subscriptionsRepository.save(subscription);
-    this.logger.log(`New subscription created for chat ID: ${chatId}`);
-    return subscription;
   }
 
   async unsubscribe(chatId: string): Promise<boolean> {
